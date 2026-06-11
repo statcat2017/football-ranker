@@ -1,5 +1,5 @@
 import { createAppDatabase } from "../lib/db/adapter";
-import { applyMigrations } from "../lib/db/migrate";
+import { SCHEMA } from "../lib/db/schema";
 import { normalizePosition } from "../lib/players/normalize";
 
 const API_BASE = "https://api.football-data.org/v4";
@@ -44,7 +44,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 async function main() {
   const dbPath = process.env.SQLITE_DB_PATH ?? "./data/football-ranker.sqlite";
   const db = createAppDatabase(dbPath);
-  await applyMigrations(db);
+  await db.exec(SCHEMA);
 
   console.log("Fetching Premier League teams...");
   const data = await fetchJson<{ season?: { startDate?: string; endDate?: string }; teams: FootballDataTeam[] }>(

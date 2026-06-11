@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { createAppDatabase, AppDatabase } from "./adapter";
 import { SCHEMA } from "./schema";
 
-describe("Database migrations", () => {
+describe("Database schema", () => {
   let db: AppDatabase;
 
   it("creates all tables and indexes in memory", async () => {
@@ -17,6 +17,7 @@ describe("Database migrations", () => {
     expect(tableNames).toContain("teams");
     expect(tableNames).toContain("players");
     expect(tableNames).toContain("votes");
+    expect(tableNames).toContain("consumed_matchups");
   });
 
   it("applies schema idempotently", async () => {
@@ -27,7 +28,7 @@ describe("Database migrations", () => {
     const tables = await db.all<{ name: string }>(
       "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
     );
-    expect(tables.length).toBeGreaterThanOrEqual(3);
+    expect(tables.length).toBeGreaterThanOrEqual(4);
   });
 
   it("enforces foreign key constraints", async () => {
@@ -35,7 +36,6 @@ describe("Database migrations", () => {
     await db.exec(SCHEMA);
     await db.exec("PRAGMA foreign_keys = ON");
 
-    // Insert player with non-existent team should fail
     await expect(
       db.run("INSERT INTO players (external_id, name, team_id) VALUES (?, ?, ?)", ["ext-1", "Test", 999]),
     ).rejects.toThrow();

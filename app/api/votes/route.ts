@@ -3,13 +3,26 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import { getDatabase } from "@/lib/db/client";
 import { castVote, TokenError } from "@/lib/votes/cast";
 import { getRandomMatchup } from "@/lib/players/queries";
-import { castVoteSchema } from "@/lib/votes/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { hashForAudit, parseFirstIp } from "@/lib/matchup-token";
 import type { CastVoteResult } from "@/lib/types";
+
+const castVoteSchema = z.object({
+  matchupToken: z.string().min(1),
+  playerAId: z.number().int().positive(),
+  playerBId: z.number().int().positive(),
+  winnerId: z.number().int().positive(),
+}).refine(
+  (data) => data.playerAId !== data.playerBId,
+  { message: "Cannot vote for the same player twice" }
+).refine(
+  (data) => data.winnerId === data.playerAId || data.winnerId === data.playerBId,
+  { message: "Winner must be one of the two players" }
+);
 
 export async function POST(request: Request) {
   const rawIp = request.headers.get("x-forwarded-for") ?? "unknown";
