@@ -1,0 +1,63 @@
+import type { PlayerSummary } from "@/lib/types";
+import Image from "next/image";
+
+interface PlayerCardProps {
+  player: PlayerSummary;
+  onSelect: () => void;
+  disabled: boolean;
+  isWinner?: boolean;
+  isLoser?: boolean;
+}
+
+export function PlayerCard({ player, onSelect, disabled, isWinner, isLoser }: PlayerCardProps) {
+  const initials = player.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  let cardClass = "player-card";
+  if (isWinner) cardClass += " player-card--winner";
+  if (isLoser) cardClass += " player-card--loser";
+  if (disabled) cardClass += " player-card--disabled";
+
+  return (
+    <button
+      className={cardClass}
+      onClick={onSelect}
+      disabled={disabled}
+      aria-label={`Select ${player.name}`}
+    >
+      <div className="player-card__photo">
+        {player.team_crest_url && (
+          <Image
+            className="player-card__crest"
+            src={player.team_crest_url}
+            alt=""
+            width={28}
+            height={28}
+          />
+        )}
+        <span className="player-card__initials">{initials}</span>
+        {player.shirt_number && (
+          <span className="player-card__number">{player.shirt_number}</span>
+        )}
+      </div>
+      <div className="player-card__info">
+        <h3 className="player-card__name">{player.name}</h3>
+        <div className="player-card__meta">
+          {player.team_name && (
+            <span className="player-card__team">{player.team_name}</span>
+          )}
+          {player.position_group && (
+            <span className="player-card__position">{player.position_group}</span>
+          )}
+          {player.nationality && (
+            <span className="player-card__nationality">{player.nationality}</span>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
