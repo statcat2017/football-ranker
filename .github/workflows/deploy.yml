@@ -1,0 +1,75 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare standalone bundle
+        run: |
+          rm -rf deploy
+          mkdir -p deploy
+          cp -r .next/standalone/. deploy/
+          mkdir -p deploy/.next
+          cp -r .next/static deploy/.next/static
+
+      - name: Deploy to VPS
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
+          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
+          REMOTE_USER: appuser
+          SOURCE: "deploy/"
+          TARGET: ${{ secrets.DEPLOY_PATH }}
+          EXCLUDE: "data/*.sqlite, data/*.sqlite-shm, data/*.sqlite-wal"
+          ARGS: "-rlgoDzvc -i"
+
+      - name: Restart app
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: appuser
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            sudo systemctl restart football-ranker
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: appuser
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            HEALTHCHECK_URL="http://localhost:3000/api/health"
+            for i in {1..30}; do
+              if curl -fsS --max-time 5 "$HEALTHCHECK_URL" > /dev/null 2>&1; then
+                echo "Health check passed"
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "Health check failed after 60s"
+            sudo journalctl -u football-ranker -n 100 --no-pager
+            exit 1
