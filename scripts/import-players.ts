@@ -59,6 +59,7 @@ async function main() {
   console.log(`Found ${data.teams.length} teams`);
 
   const importedPlayerIds: number[] = [];
+  let hadFailures = false;
 
   for (const team of data.teams) {
     console.log(`  Processing ${team.name}...`);
@@ -79,6 +80,7 @@ async function main() {
 
     if (!teamRow) {
       console.error(`  Failed to upsert team ${team.name}`);
+      hadFailures = true;
       continue;
     }
 
@@ -89,11 +91,13 @@ async function main() {
         team.squad = teamDetail.squad;
       } catch (err) {
         console.error(`  Failed to fetch squad for ${team.name}: ${err}`);
+        hadFailures = true;
       }
       await delay(6500);
     }
 
     if (!team.squad) {
+      hadFailures = true;
       continue;
     }
 
@@ -131,9 +135,10 @@ async function main() {
     await delay(6500);
   }
 
-  console.log(`\nMarking inactive players...`);
-
-  if (importedPlayerIds.length > 0) {
+  if (hadFailures) {
+    console.warn("\nSkipping inactive-player cleanup because import was incomplete (some teams failed)");
+  } else if (importedPlayerIds.length > 0) {
+    console.log(`\nMarking inactive players...`);
     const params = importedPlayerIds.map(() => "?").join(",");
 
     const result = await db.run(

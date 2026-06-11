@@ -23,10 +23,27 @@ describe("getKFactor", () => {
 describe("calculateElo", () => {
   it("gives equal gain/loss for equal ratings (K=48, <10 comps)", () => {
     const result = calculateElo(1500, 1500, 5, 5);
-    expect(result.winnerDelta).toBe(24); // 48 * (1 - 0.5) = 24
+    expect(result.winnerDelta).toBe(24);
     expect(result.loserDelta).toBe(-24);
     expect(result.winnerNewRating).toBe(1524);
     expect(result.loserNewRating).toBe(1476);
+  });
+
+  it("is zero-sum", () => {
+    const result = calculateElo(1500, 1500, 5, 5);
+    expect(result.winnerDelta + result.loserDelta).toBe(0);
+  });
+
+  it("is zero-sum with mixed comparisons", () => {
+    const result = calculateElo(1500, 1500, 100, 5);
+    expect(result.winnerDelta + result.loserDelta).toBe(0);
+  });
+
+  it("uses max K when comparisons differ", () => {
+    const result = calculateElo(1500, 1500, 100, 5);
+    expect(result.kFactor).toBe(48); // max(16, 48)
+    expect(result.winnerDelta).toBe(24);
+    expect(result.loserDelta).toBe(-24);
   });
 
   it("higher-rated winner gains little", () => {
@@ -41,14 +58,6 @@ describe("calculateElo", () => {
     const result = calculateElo(1400, 1600, 5, 5);
     expect(result.winnerDelta).toBeGreaterThan(30);
     expect(result.loserDelta).toBeLessThan(-30);
-  });
-
-  it("uses different K for established vs provisional players", () => {
-    const result = calculateElo(1500, 1500, 100, 5);
-    // Established player (K=16) gains 8, provisional (K=48) loses 24
-    expect(result.winnerDelta).toBe(8);
-    expect(result.loserDelta).toBe(-24);
-    expect(result.kFactor).toBe(16); // K of winner
   });
 
   it("ratings converge when expected winner wins", () => {

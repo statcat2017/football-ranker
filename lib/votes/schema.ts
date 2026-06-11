@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const castVoteSchema = z.object({
+  matchupToken: z.string().min(1),
   playerAId: z.number().int().positive(),
   playerBId: z.number().int().positive(),
   winnerId: z.number().int().positive(),

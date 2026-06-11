@@ -136,18 +136,25 @@ PORT=3000
 
 ### 7. Nginx reverse proxy
 
-Add to nginx config:
+Serve from its own subdomain or root path:
 
 ```nginx
-location /football-ranker/ {
-    proxy_pass http://127.0.0.1:3000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
+server {
+    server_name ranker.example.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_cache_bypass $http_upgrade;
+    }
 }
 ```
+
+For rate limiting and a full nginx config, see `docs/nginx.conf`.
 
 ### 8. Cron for re-import
 

@@ -9,7 +9,11 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const includeProvisional = url.searchParams.get("provisional") === "true";
-    const limit = parseInt(url.searchParams.get("limit") ?? "100", 10);
+
+    const rawLimit = Number(url.searchParams.get("limit") ?? 100);
+    const limit = Number.isFinite(rawLimit)
+      ? Math.min(Math.max(Math.floor(rawLimit), 1), 500)
+      : 100;
 
     const db = await getDatabase();
     const leaderboard = await getLeaderboard(db, { includeProvisional, limit });

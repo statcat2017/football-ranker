@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import type { LeaderboardEntry } from "@/lib/types";
 
@@ -13,24 +13,33 @@ export function Leaderboard({ initialData }: LeaderboardProps) {
   const [showProvisional, setShowProvisional] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (document.visibilityState === "hidden") return;
+  const refreshLeaderboard = useCallback(async (include: boolean) => {
+    try {
+      const res = await fetch(`/api/leaderboard?provisional=${include}`);
+      const json = await res.json();
+      setData(json.leaderboard);
+      setLastUpdated(new Date());
+    } catch {
+      // silently ignore refresh errors
+    }
+  }, []);
 
-      try {
-        const res = await fetch(
-          `/api/leaderboard?provisional=${showProvisional}`,
-        );
-        const json = await res.json();
-        setData(json.leaderboard);
-        setLastUpdated(new Date());
-      } catch {
-        // silently ignore refresh errors
-      }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      refreshLeaderboard(showProvisional);
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [showProvisional]);
+  }, [showProvisional, refreshLeaderboard]);
+
+  const handleToggle = useCallback(
+    (checked: boolean) => {
+      setShowProvisional(checked);
+      refreshLeaderboard(checked);
+    },
+    [refreshLeaderboard],
+  );
 
   return (
     <div className="leaderboard">
@@ -39,7 +48,7 @@ export function Leaderboard({ initialData }: LeaderboardProps) {
           <input
             type="checkbox"
             checked={showProvisional}
-            onChange={(e) => setShowProvisional(e.target.checked)}
+            onChange={(e) => handleToggle(e.target.checked)}
           />
           Show provisional rankings
         </label>

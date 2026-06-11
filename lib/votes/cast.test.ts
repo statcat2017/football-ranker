@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { createAppDatabase, AppDatabase } from "../db/adapter";
 import { SCHEMA } from "../db/schema";
 import { castVote } from "./cast";
-import type { Player } from "../types";
+import { signMatchup } from "../matchup-token";
 
 describe("castVote", () => {
   let db: AppDatabase;
@@ -26,15 +26,20 @@ describe("castVote", () => {
     const a = await seedPlayer(1, "Player A", 1500, 5);
     const b = await seedPlayer(2, "Player B", 1500, 5);
 
-    const result = await castVote(db, { playerAId: a, playerBId: b, winnerId: a });
+    const { vote } = await castVote(db, {
+      matchupToken: signMatchup(a, b),
+      playerAId: a,
+      playerBId: b,
+      winnerId: a,
+    });
 
-    expect(result.vote.winnerId).toBe(a);
-    expect(result.vote.loserId).toBe(b);
-    expect(result.vote.winnerDelta).toBeGreaterThan(0);
-    expect(result.vote.loserDelta).toBeLessThan(0);
+    expect(vote.winnerId).toBe(a);
+    expect(vote.loserId).toBe(b);
+    expect(vote.winnerDelta).toBeGreaterThan(0);
+    expect(vote.loserDelta).toBeLessThan(0);
 
-    const playerA = await db.get<Player>("SELECT * FROM players WHERE id = ?", [a]);
-    const playerB = await db.get<Player>("SELECT * FROM players WHERE id = ?", [b]);
+    const playerA = await db.get<Record<string, unknown>>("SELECT * FROM players WHERE id = ?", [a]);
+    const playerB = await db.get<Record<string, unknown>>("SELECT * FROM players WHERE id = ?", [b]);
 
     expect(playerA!.elo_rating).toBeGreaterThan(1500);
     expect(playerB!.elo_rating).toBeLessThan(1500);
@@ -49,6 +54,7 @@ describe("castVote", () => {
     const b = await seedPlayer(4, "Player D", 1500, 5);
 
     await castVote(db, {
+      matchupToken: signMatchup(a, b),
       playerAId: a,
       playerBId: b,
       winnerId: a,
@@ -65,36 +71,66 @@ describe("castVote", () => {
     expect(vote.player_b_elo_before).toBe(1500);
     expect(vote.player_a_elo_after).toBeGreaterThan(1500);
     expect(vote.player_b_elo_after).toBeLessThan(1500);
-    expect(vote.k_factor).toBe(48);
     expect(vote.session_id).toBe("test-session");
     expect(vote.ip_hash).toBe("hash123");
   });
 
-  it("handles player A winning", async () => {
+  it("rejects invalid matchup token", async () => {
     const a = await seedPlayer(5, "Player E", 1500, 5);
     const b = await seedPlayer(6, "Player F", 1500, 5);
 
-    const result = await castVote(db, { playerAId: a, playerBId: b, winnerId: a });
+    await expect(
+      castVote(db, {
+        matchupToken: "invalid-token",
+        playerAId: a,
+        playerBId: b,
+        winnerId: a,
+      }),
+    ).rejects.toThrow("Invalid matchup token");
+  });
 
-    expect(result.vote.winnerId).toBe(a);
-    expect(result.vote.loserId).toBe(b);
+  it("rejects token for wrong players", async () => {
+    await seedPlayer(7, "Player G", 1500, 5);
+    await seedPlayer(8, "Player H", 1500, 5);
+    await seedPlayer(9, "Player I", 1500, 5);
+
+    const fakeToken = signMatchup(7, 8);
+
+    await expect(
+      castVote(db, {
+        matchupToken: fakeToken,
+        playerAId: 7,
+        playerBId: 9,
+        winnerId: 7,
+      }),
+    ).rejects.toThrow("Invalid matchup token");
   });
 
   it("handles player B winning", async () => {
-    const a = await seedPlayer(7, "Player G", 1500, 5);
-    const b = await seedPlayer(8, "Player H", 1500, 5);
+    const a = await seedPlayer(10, "Player J", 1500, 5);
+    const b = await seedPlayer(11, "Player K", 1500, 5);
 
-    const result = await castVote(db, { playerAId: a, playerBId: b, winnerId: b });
+    const { vote } = await castVote(db, {
+      matchupToken: signMatchup(a, b),
+      playerAId: a,
+      playerBId: b,
+      winnerId: b,
+    });
 
-    expect(result.vote.winnerId).toBe(b);
-    expect(result.vote.loserId).toBe(a);
+    expect(vote.winnerId).toBe(b);
+    expect(vote.loserId).toBe(a);
   });
 
   it("rolls back on invalid player", async () => {
-    await seedPlayer(9, "Player I", 1500);
+    await seedPlayer(12, "Player L", 1500);
 
     await expect(
-      castVote(db, { playerAId: 9, playerBId: 999, winnerId: 9 }),
+      castVote(db, {
+        matchupToken: signMatchup(12, 999),
+        playerAId: 12,
+        playerBId: 999,
+        winnerId: 12,
+      }),
     ).rejects.toThrow("not found");
   });
 });

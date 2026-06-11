@@ -1,12 +1,22 @@
 import type { AppDatabase } from "../db/adapter";
-import type { CastVoteInput, CastVoteResult, Player, PlayerSummary } from "../types";
+import type { CastVoteInput, CastVoteResult } from "../types";
 import { calculateElo } from "../elo";
 import { getRandomMatchup } from "../players/queries";
+import { verifyMatchup } from "../matchup-token";
 
-export async function castVote(db: AppDatabase, input: CastVoteInput): Promise<CastVoteResult> {
+export async function castVote(db: AppDatabase, input: CastVoteInput): Promise<{ vote: CastVoteResult["vote"] }> {
+  const verification = verifyMatchup(input.matchupToken, input.playerAId, input.playerBId);
+  if (!verification.valid) {
+    throw new Error(`Invalid matchup token: ${verification.reason}`);
+  }
+
   return db.transaction(async (txDb) => {
-    const playerA = await txDb.get<Player>("SELECT * FROM players WHERE id = ?", [input.playerAId]);
-    const playerB = await txDb.get<Player>("SELECT * FROM players WHERE id = ?", [input.playerBId]);
+    const playerA = await txDb.get<Record<string, unknown>>(
+      "SELECT * FROM players WHERE id = ?", [input.playerAId],
+    );
+    const playerB = await txDb.get<Record<string, unknown>>(
+      "SELECT * FROM players WHERE id = ?", [input.playerBId],
+    );
 
     if (!playerA || !playerB) {
       throw new Error("One or both players not found");
@@ -16,18 +26,14 @@ export async function castVote(db: AppDatabase, input: CastVoteInput): Promise<C
       throw new Error("One or both players are no longer active");
     }
 
-    if (input.winnerId !== input.playerAId && input.winnerId !== input.playerBId) {
-      throw new Error("Winner must be one of the two players");
-    }
-
     const winner = input.winnerId === input.playerAId ? playerA : playerB;
     const loser = input.winnerId === input.playerAId ? playerB : playerA;
 
     const eloResult = calculateElo(
-      winner.elo_rating,
-      loser.elo_rating,
-      winner.comparisons,
-      loser.comparisons,
+      winner.elo_rating as number,
+      loser.elo_rating as number,
+      winner.comparisons as number,
+      loser.comparisons as number,
     );
 
     const winnerNewRating = eloResult.winnerNewRating;
@@ -43,8 +49,8 @@ export async function castVote(db: AppDatabase, input: CastVoteInput): Promise<C
         player_a_elo_after, player_b_elo_after,
         k_factor, session_id, ip_hash, user_agent_hash
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [playerA.id, playerB.id, winner.id, loser.id,
-       playerA.elo_rating, playerB.elo_rating,
+      [playerA.id as number, playerB.id as number, winner.id as number, loser.id as number,
+       playerA.elo_rating as number, playerB.elo_rating as number,
        aEloAfter, bEloAfter,
        eloResult.kFactor,
        input.sessionId ?? null,
@@ -54,26 +60,23 @@ export async function castVote(db: AppDatabase, input: CastVoteInput): Promise<C
 
     await txDb.run(
       "UPDATE players SET elo_rating = ?, wins = wins + 1, comparisons = comparisons + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [winnerNewRating, winner.id],
+      [winnerNewRating, winner.id as number],
     );
 
     await txDb.run(
       "UPDATE players SET elo_rating = ?, losses = losses + 1, comparisons = comparisons + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-      [loserNewRating, loser.id],
+      [loserNewRating, loser.id as number],
     );
 
     return {
       vote: {
-        winnerId: winner.id,
-        loserId: loser.id,
+        winnerId: winner.id as number,
+        loserId: loser.id as number,
         winnerDelta: eloResult.winnerDelta,
         loserDelta: eloResult.loserDelta,
       },
-      nextMatchup: { playerA: null as unknown as PlayerSummary, playerB: null as unknown as PlayerSummary },
     };
-  }).then(async (result) => {
-    const nextMatchup = await getRandomMatchup(db);
-    result.nextMatchup = nextMatchup;
-    return result;
   });
 }
+
+export { getRandomMatchup };

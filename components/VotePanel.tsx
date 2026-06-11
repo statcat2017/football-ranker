@@ -26,6 +26,7 @@ export function VotePanel({ initialMatchup }: VotePanelProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            matchupToken: matchup.token,
             playerAId: matchup.playerA.id,
             playerBId: matchup.playerB.id,
             winnerId,
@@ -44,7 +45,9 @@ export function VotePanel({ initialMatchup }: VotePanelProps) {
         setStatus("result");
 
         setTimeout(() => {
-          setMatchup(data.nextMatchup);
+          if (data.nextMatchup) {
+            setMatchup(data.nextMatchup);
+          }
           setLastResult(null);
           setStatus("idle");
           setVoteCount((prev) => prev + 1);
@@ -62,7 +65,7 @@ export function VotePanel({ initialMatchup }: VotePanelProps) {
 
   return (
     <div className="vote-panel">
-      <div className="matchup">
+      <div className="matchup" role="group" aria-label="Choose the better player">
         <PlayerCard
           player={matchup.playerA}
           onSelect={() => handleVote(matchup.playerA.id)}
@@ -70,7 +73,7 @@ export function VotePanel({ initialMatchup }: VotePanelProps) {
           isWinner={status === "result" && matchup.playerA.id === winnerId}
           isLoser={status === "result" && matchup.playerA.id === loserId}
         />
-        <div className="matchup__vs">
+        <div className="matchup__vs" aria-hidden="true">
           <span>VS</span>
         </div>
         <PlayerCard

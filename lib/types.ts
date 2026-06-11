@@ -70,9 +70,11 @@ export interface LeaderboardEntry {
 export interface Matchup {
   playerA: PlayerSummary;
   playerB: PlayerSummary;
+  token: string;
 }
 
 export interface CastVoteInput {
+  matchupToken: string;
   playerAId: number;
   playerBId: number;
   winnerId: number;
@@ -88,5 +90,5 @@ export interface CastVoteResult {
     winnerDelta: number;
     loserDelta: number;
   };
-  nextMatchup: Matchup;
+  nextMatchup: Matchup | null;
 }

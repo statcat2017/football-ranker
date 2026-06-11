@@ -19,18 +19,18 @@ export function calculateElo(
   loserComparisons: number,
 ): EloResult {
   const expectedWinner = 1 / (1 + Math.pow(10, (loserRating - winnerRating) / 400));
-  const expectedLoser = 1 / (1 + Math.pow(10, (winnerRating - loserRating) / 400));
 
   const kWinner = getKFactor(winnerComparisons);
   const kLoser = getKFactor(loserComparisons);
+  const k = Math.max(kWinner, kLoser);
 
-  const winnerDelta = kWinner * (1 - expectedWinner);
-  const loserDelta = kLoser * (0 - expectedLoser);
+  const winnerDelta = k * (1 - expectedWinner);
+  const loserDelta = k * (0 - (1 - expectedWinner));
 
   return {
     winnerNewRating: Math.round((winnerRating + winnerDelta) * 100) / 100,
     loserNewRating: Math.round((loserRating + loserDelta) * 100) / 100,
-    kFactor: kWinner,
+    kFactor: k,
     winnerDelta: Math.round(winnerDelta * 100) / 100,
     loserDelta: Math.round(loserDelta * 100) / 100,
   };

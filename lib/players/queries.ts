@@ -1,7 +1,8 @@
 import type { AppDatabase } from "../db/adapter";
 import type { PlayerSummary, Matchup } from "../types";
+import { signMatchup } from "../matchup-token";
 
-export async function getRandomMatchup(db: AppDatabase): Promise<Matchup> {
+export async function getRandomMatchup(db: AppDatabase): Promise<Matchup & { token: string }> {
   const candidates = await db.all<Record<string, unknown>>(
     `SELECT p.*, t.name as team_name, t.crest_url as team_crest_url
      FROM players p
@@ -16,11 +17,11 @@ export async function getRandomMatchup(db: AppDatabase): Promise<Matchup> {
   }
 
   const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+  const playerA = toPlayerSummary(shuffled[0]);
+  const playerB = toPlayerSummary(shuffled[1]);
+  const token = signMatchup(playerA.id, playerB.id);
 
-  return {
-    playerA: toPlayerSummary(shuffled[0]),
-    playerB: toPlayerSummary(shuffled[1]),
-  };
+  return { playerA, playerB, token };
 }
 
 export async function getPlayer(db: AppDatabase, id: number) {
