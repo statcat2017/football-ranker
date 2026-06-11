@@ -1,16 +1,35 @@
 import type { AppDatabase } from "../db/adapter";
 import type { CastVoteInput, CastVoteResult } from "../types";
 import { calculateElo } from "../elo";
-import { getRandomMatchup } from "../players/queries";
-import { verifyMatchup } from "../matchup-token";
+import { verifyMatchup, TokenError } from "../matchup-token";
+
+export { TokenError };
 
 export async function castVote(db: AppDatabase, input: CastVoteInput): Promise<{ vote: CastVoteResult["vote"] }> {
-  const verification = verifyMatchup(input.matchupToken, input.playerAId, input.playerBId);
+  const verification = verifyMatchup(
+    input.matchupToken,
+    input.playerAId,
+    input.playerBId,
+    input.sessionId,
+  );
   if (!verification.valid) {
-    throw new Error(`Invalid matchup token: ${verification.reason}`);
+    throw new TokenError(verification.reason);
+  }
+
+  const consumed = await db.get<{ id: number }>(
+    "SELECT id FROM consumed_matchups WHERE nonce = ?",
+    [verification.nonce],
+  );
+  if (consumed) {
+    throw new TokenError("Token already used");
   }
 
   return db.transaction(async (txDb) => {
+    await txDb.run(
+      "INSERT INTO consumed_matchups (nonce, session_id) VALUES (?, ?)",
+      [verification.nonce, input.sessionId ?? null],
+    );
+
     const playerA = await txDb.get<Record<string, unknown>>(
       "SELECT * FROM players WHERE id = ?", [input.playerAId],
     );
@@ -78,5 +97,3 @@ export async function castVote(db: AppDatabase, input: CastVoteInput): Promise<{
     };
   });
 }
-
-export { getRandomMatchup };

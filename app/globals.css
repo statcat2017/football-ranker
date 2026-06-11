@@ -268,6 +268,23 @@ h1, h2, h3 {
   min-height: 1.2rem;
 }
 
+.vote-panel__refresh {
+  margin-top: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.vote-panel__refresh:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
 .leaderboard__controls {
   display: flex;
   justify-content: space-between;

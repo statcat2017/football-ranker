@@ -4,7 +4,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getDatabase } from "@/lib/db/client";
-import { castVote, getRandomMatchup } from "@/lib/votes/cast";
+import { castVote, TokenError } from "@/lib/votes/cast";
+import { getRandomMatchup } from "@/lib/players/queries";
 import { castVoteSchema } from "@/lib/votes/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { hashForAudit, parseFirstIp } from "@/lib/matchup-token";
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
 
     let nextMatchup: CastVoteResult["nextMatchup"] | null = null;
     try {
-      nextMatchup = await getRandomMatchup(db);
+      nextMatchup = await getRandomMatchup(db, sessionId);
     } catch {
       // vote is committed; don't fail the response if matchup fetch errors
     }
@@ -67,6 +68,13 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
+    if (error instanceof TokenError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 403 },
+      );
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },

@@ -4,9 +4,17 @@ function getSecret(): string {
   return process.env.SESSION_SECRET ?? "dev-secret-do-not-use-in-production";
 }
 
-export function signMatchup(playerAId: number, playerBId: number): string {
-  const expiry = Date.now() + 10 * 60 * 1000;
-  const payload = `${playerAId}:${playerBId}:${expiry}`;
+export class TokenError extends Error {
+  constructor(reason: string) {
+    super(`Invalid or expired matchup token: ${reason}`);
+    this.name = "TokenError";
+  }
+}
+
+export function signMatchup(playerAId: number, playerBId: number, sessionId?: string): string {
+  const expiry = Date.now() + 5 * 60 * 1000;
+  const nonce = crypto.randomUUID();
+  const payload = `${playerAId}:${playerBId}:${sessionId ?? ""}:${expiry}:${nonce}`;
   const hmac = crypto.createHmac("sha256", getSecret());
   hmac.update(payload);
   const sig = hmac.digest("hex").slice(0, 16);
@@ -17,8 +25,9 @@ export function verifyMatchup(
   token: string,
   playerAId: number,
   playerBId: number,
+  sessionId?: string,
 ):
-  | { valid: true; playerAId: number; playerBId: number }
+  | { valid: true; playerAId: number; playerBId: number; nonce: string }
   | { valid: false; reason: string } {
   try {
     const decoded = Buffer.from(token, "base64url").toString("utf8");
@@ -31,11 +40,11 @@ export function verifyMatchup(
     const sig = decoded.slice(lastColon + 1);
 
     const parts = payload.split(":");
-    if (parts.length !== 3) {
+    if (parts.length !== 5) {
       return { valid: false, reason: "Malformed token" };
     }
 
-    const [aStr, bStr, expiryStr] = parts;
+    const [aStr, bStr, tokSessionId, expiryStr, nonce] = parts;
     const expiry = parseInt(expiryStr, 10);
     if (!Number.isFinite(expiry) || Date.now() > expiry) {
       return { valid: false, reason: "Token expired" };
@@ -48,6 +57,10 @@ export function verifyMatchup(
       return { valid: false, reason: "Token mismatch" };
     }
 
+    if (sessionId !== undefined && tokSessionId !== "" && tokSessionId !== sessionId) {
+      return { valid: false, reason: "Session mismatch" };
+    }
+
     const recomputed = crypto.createHmac("sha256", getSecret());
     recomputed.update(payload);
     const expectedSig = recomputed.digest("hex").slice(0, 16);
@@ -56,7 +69,7 @@ export function verifyMatchup(
       return { valid: false, reason: "Invalid signature" };
     }
 
-    return { valid: true, playerAId: aId, playerBId: bId };
+    return { valid: true, playerAId: aId, playerBId: bId, nonce };
   } catch {
     return { valid: false, reason: "Invalid token" };
   }

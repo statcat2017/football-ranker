@@ -56,4 +56,11 @@ CREATE INDEX IF NOT EXISTS idx_votes_players ON votes(player_a_id, player_b_id);
 CREATE INDEX IF NOT EXISTS idx_players_team ON players(team_id);
 CREATE INDEX IF NOT EXISTS idx_players_elo ON players(elo_rating);
 CREATE INDEX IF NOT EXISTS idx_players_active ON players(is_active);
+
+CREATE TABLE IF NOT EXISTS consumed_matchups (
+  id INTEGER PRIMARY KEY,
+  nonce TEXT UNIQUE NOT NULL,
+  session_id TEXT,
+  consumed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 `;

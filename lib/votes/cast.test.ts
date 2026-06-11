@@ -86,7 +86,7 @@ describe("castVote", () => {
         playerBId: b,
         winnerId: a,
       }),
-    ).rejects.toThrow("Invalid matchup token");
+    ).rejects.toThrow("Invalid or expired matchup token");
   });
 
   it("rejects token for wrong players", async () => {
@@ -103,7 +103,19 @@ describe("castVote", () => {
         playerBId: 9,
         winnerId: 7,
       }),
-    ).rejects.toThrow("Invalid matchup token");
+    ).rejects.toThrow("Invalid or expired matchup token");
+  });
+
+  it("rejects replayed token", async () => {
+    const a = await seedPlayer(20, "Replay A", 1500, 5);
+    const b = await seedPlayer(21, "Replay B", 1500, 5);
+    const token = signMatchup(a, b);
+
+    await castVote(db, { matchupToken: token, playerAId: a, playerBId: b, winnerId: a });
+
+    await expect(
+      castVote(db, { matchupToken: token, playerAId: a, playerBId: b, winnerId: a }),
+    ).rejects.toThrow("Token already used");
   });
 
   it("handles player B winning", async () => {

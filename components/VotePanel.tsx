@@ -16,6 +16,18 @@ export function VotePanel({ initialMatchup }: VotePanelProps) {
   const [voteCount, setVoteCount] = useState(0);
   const [lastResult, setLastResult] = useState<CastVoteResult["vote"] | null>(null);
 
+  const fetchNewMatchup = useCallback(async () => {
+    try {
+      const res = await fetch("/api/matchups/next");
+      if (res.ok) {
+        const newMatchup = await res.json();
+        setMatchup(newMatchup);
+      }
+    } catch {
+      // retry silently failed
+    }
+  }, []);
+
   const handleVote = useCallback(
     async (winnerId: number) => {
       if (status === "voting") return;
@@ -84,9 +96,14 @@ export function VotePanel({ initialMatchup }: VotePanelProps) {
           isLoser={status === "result" && matchup.playerB.id === loserId}
         />
       </div>
-      <p className="vote-panel__count">
-        {voteCount > 0 ? `You've voted ${voteCount} time${voteCount !== 1 ? "s" : ""}` : ""}
-      </p>
+      {voteCount > 0 && (
+        <p className="vote-panel__count">
+          You&apos;ve voted {voteCount} time{voteCount !== 1 ? "s" : ""}
+        </p>
+      )}
+      <button className="vote-panel__refresh" onClick={fetchNewMatchup}>
+        Skip this matchup
+      </button>
     </div>
   );
 }

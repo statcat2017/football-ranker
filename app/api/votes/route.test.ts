@@ -46,7 +46,7 @@ describe("POST /api/votes", () => {
     expect(response.status).toBe(400);
   });
 
-  it("rejects invalid matchup token", async () => {
+  it("rejects invalid matchup token with 403", async () => {
     const { POST } = await import("@/app/api/votes/route");
     const req = new Request("http://localhost/api/votes", {
       method: "POST",
@@ -56,8 +56,8 @@ describe("POST /api/votes", () => {
 
     const response = await POST(req);
     const json = await response.json();
-    expect(response.status).toBe(500);
-    expect(json.error).toContain("Invalid matchup token");
+    expect(response.status).toBe(403);
+    expect(json.error).toContain("Invalid or expired matchup token");
   });
 
   it("accepts valid vote with signed token", async () => {
@@ -77,5 +77,25 @@ describe("POST /api/votes", () => {
     expect(json.vote).toBeDefined();
     expect(json.vote.winnerId).toBe(1);
     expect(json.vote.winnerDelta).toBeGreaterThan(0);
+  });
+
+  it("rejects replayed token with 403", async () => {
+    const token = signMatchup(2, 3);
+
+    const { POST } = await import("@/app/api/votes/route");
+    const req1 = new Request("http://localhost/api/votes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matchupToken: token, playerAId: 2, playerBId: 3, winnerId: 2 }),
+    });
+    await POST(req1);
+
+    const req2 = new Request("http://localhost/api/votes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matchupToken: token, playerAId: 2, playerBId: 3, winnerId: 2 }),
+    });
+    const response = await POST(req2);
+    expect(response.status).toBe(403);
   });
 });
