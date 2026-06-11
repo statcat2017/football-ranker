@@ -38,6 +38,16 @@ NODE_ENV=production
 
 Production uses SQLite via `better-sqlite3`.
 
+## Reverse Proxy
+
+Nginx should proxy `ranker.statcat.co.uk` to `127.0.0.1:3001`.
+
+See `docs/nginx.conf` for the suggested config.
+
+## systemd
+
+The service should be named `football-ranker` and point at `node server.js` in the deploy directory.
+
 ## Health Check
 
 Deployment checks:
