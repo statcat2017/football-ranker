@@ -53,6 +53,9 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
+            set -a
+            . /etc/football-ranker.env
+            set +a
             sudo systemctl restart football-ranker
 
       - name: Health check
@@ -62,7 +65,11 @@ jobs:
           username: appuser
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            HEALTHCHECK_URL="http://localhost:3000/api/health"
+            set -a
+            . /etc/football-ranker.env
+            set +a
+            PORT="${PORT:-3001}"
+            HEALTHCHECK_URL="http://localhost:${PORT}/api/health"
             for i in {1..30}; do
               if curl -fsS --max-time 5 "$HEALTHCHECK_URL" > /dev/null 2>&1; then
                 echo "Health check passed"

@@ -86,8 +86,8 @@ const app = next({ dev: false });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-  createServer((req, res) => handle(req, res)).listen(3000, () => {
-    console.log("Football Ranker listening on http://localhost:3000");
+  createServer((req, res) => handle(req, res)).listen(3001, () => {
+    console.log("Football Ranker listening on http://localhost:3001");
   });
 });
 ```
@@ -131,7 +131,7 @@ SQLITE_DB_PATH=/var/lib/football-ranker/football-ranker.sqlite
 FOOTBALL_DATA_API_TOKEN=...
 SESSION_SECRET=...
 NODE_ENV=production
-PORT=3000
+PORT=3001
 ```
 
 ### 7. Nginx reverse proxy
@@ -143,7 +143,7 @@ server {
     server_name ranker.example.com;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';

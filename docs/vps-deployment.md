@@ -30,7 +30,7 @@ SQLITE_DB_PATH=/srv/football-ranker/data/football-ranker.sqlite
 FOOTBALL_DATA_API_TOKEN=...
 ADMIN_SECRET=...
 SESSION_SECRET=...
-PORT=3000
+PORT=3001
 NODE_ENV=production
 ```
 
@@ -43,7 +43,7 @@ Production uses SQLite via `better-sqlite3`.
 Deployment checks:
 
 ```
-http://localhost:3000/api/health
+http://localhost:3001/api/health
 ```
 
 ## GitHub Secrets

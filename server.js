@@ -3,7 +3,7 @@ const { createServer } = require("http");
 const { parse } = require("url");
 const next = require("next");
 
-const port = parseInt(process.env.PORT ?? "3000", 10);
+const port = parseInt(process.env.PORT ?? "3001", 10);
 const hostname = process.env.HOSTNAME ?? "localhost";
 const app = next({ dev: false, hostname, port });
 const handle = app.getRequestHandler();
