@@ -26,6 +26,10 @@ export async function castVote(db: AppDatabase, input: CastVoteInput): Promise<{
 
   return db.transaction(async (txDb) => {
     await txDb.run(
+      "DELETE FROM consumed_matchups WHERE consumed_at < datetime('now', '-1 day')",
+    );
+
+    await txDb.run(
       "INSERT INTO consumed_matchups (nonce, session_id) VALUES (?, ?)",
       [verification.nonce, input.sessionId ?? null],
     );

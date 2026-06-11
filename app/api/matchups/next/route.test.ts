@@ -1,10 +1,16 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { createAppDatabase, AppDatabase } from "@/lib/db/adapter";
 import { SCHEMA } from "@/lib/db/schema";
 import { resetDatabase } from "@/lib/db/client";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({
+    get: vi.fn(() => undefined),
+  })),
+}));
 
 describe("GET /api/matchups/next", () => {
   let db: AppDatabase;
