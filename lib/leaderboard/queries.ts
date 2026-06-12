@@ -7,10 +7,6 @@ export async function getLeaderboard(
 ): Promise<LeaderboardEntry[]> {
   const { includeProvisional = false, limit = 100 } = options;
 
-  const whereClause = includeProvisional
-    ? ""
-    : "WHERE p.comparisons >= 1";
-
   const rows = await db.all<LeaderboardEntry>(
     `SELECT
        ROW_NUMBER() OVER (ORDER BY p.elo_rating DESC) as rank,
@@ -21,7 +17,7 @@ export async function getLeaderboard(
      FROM players p
      LEFT JOIN teams t ON p.team_id = t.id
      WHERE p.is_active = 1
-     ${whereClause ? `AND p.comparisons >= 1` : ""}
+     ${includeProvisional ? "" : "AND p.comparisons >= 1"}
      ORDER BY p.elo_rating DESC
      LIMIT ?`,
     [limit],

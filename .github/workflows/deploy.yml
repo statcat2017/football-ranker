@@ -3,6 +3,12 @@ name: Deploy to VPS
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      import-players:
+        description: "Run full PL player pool import after deploy"
+        type: boolean
+        default: false
 
 concurrency:
   group: production-deploy
@@ -61,6 +67,7 @@ jobs:
             sudo systemctl restart football-ranker
 
       - name: Import players
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.import-players == 'true'
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}

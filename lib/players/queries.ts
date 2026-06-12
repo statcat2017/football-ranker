@@ -16,9 +16,8 @@ export async function getRandomMatchup(db: AppDatabase, sessionId?: string): Pro
     throw new Error("Not enough active players to form a matchup. Import players first.");
   }
 
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-  const playerA = toPlayerSummary(shuffled[0]);
-  const playerB = toPlayerSummary(shuffled[1]);
+  const playerA = toPlayerSummary(candidates[0]);
+  const playerB = toPlayerSummary(candidates[1]);
   const token = signMatchup(playerA.id, playerB.id, sessionId);
 
   return { playerA, playerB, token };

@@ -1,5 +1,6 @@
 import { createAppDatabase, AppDatabase } from "../lib/db/adapter";
-import { SCHEMA, runMigrations } from "../lib/db/schema";
+import { SCHEMA } from "../lib/db/schema";
+import { runMigrations } from "../lib/db/migrations";
 import { normalizePosition } from "../lib/players/normalize";
 
 // ── football-data.org types ──────────────────────────────────────────────
