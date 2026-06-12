@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth/admin";
+import { withAdminGuard } from "@/lib/auth/guard";
 import { getDatabase } from "@/lib/db/client";
 import {
   getAdminPlayer,
@@ -11,16 +11,10 @@ import {
   deleteAdminPlayer,
 } from "@/lib/admin/players";
 
-export async function GET(
+export const GET = withAdminGuard(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+) => {
   try {
     const { id } = await params;
     const playerId = Number(id);
@@ -42,7 +36,7 @@ export async function GET(
       { status: 500 },
     );
   }
-}
+});
 
 const updatePlayerSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -55,16 +49,10 @@ const updatePlayerSchema = z.object({
   photo_url: z.string().nullable().optional(),
 });
 
-export async function PATCH(
+export const PATCH = withAdminGuard(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+) => {
   try {
     const { id } = await params;
     const playerId = Number(id);
@@ -97,18 +85,12 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withAdminGuard(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+) => {
   try {
     const { id } = await params;
     const playerId = Number(id);
@@ -138,4 +120,4 @@ export async function DELETE(
       { status: 500 },
     );
   }
-}
+});

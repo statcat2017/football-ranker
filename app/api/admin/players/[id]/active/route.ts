@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth/admin";
+import { withAdminGuard } from "@/lib/auth/guard";
 import { getDatabase } from "@/lib/db/client";
 import { setPlayerActive } from "@/lib/admin/players";
 
@@ -11,16 +11,10 @@ const toggleActiveSchema = z.object({
   active: z.boolean(),
 });
 
-export async function POST(
+export const POST = withAdminGuard(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+) => {
   try {
     const { id } = await params;
     const playerId = Number(id);
@@ -48,4 +42,4 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+});

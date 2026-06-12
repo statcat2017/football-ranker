@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import path from "path";
 import fs from "fs/promises";
-import { requireAdmin } from "@/lib/auth/admin";
+import { withAdminGuard } from "@/lib/auth/guard";
 import { getDatabase } from "@/lib/db/client";
 import { getAdminPlayer, updateAdminPlayer, removePlayerPhoto } from "@/lib/admin/players";
 
@@ -13,16 +13,10 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR ?? path.join(process.cwd(), "data", "u
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
-export async function POST(
+export const POST = withAdminGuard(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+) => {
   try {
     const { id } = await params;
     const playerId = Number(id);
@@ -93,18 +87,12 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withAdminGuard(async (
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+) => {
   try {
     const { id } = await params;
     const playerId = Number(id);
@@ -133,4 +121,4 @@ export async function DELETE(
       { status: 500 },
     );
   }
-}
+});

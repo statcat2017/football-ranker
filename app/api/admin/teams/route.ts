@@ -2,16 +2,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/admin";
+import { withAdminGuard } from "@/lib/auth/guard";
 import { getDatabase } from "@/lib/db/client";
 
-export async function GET() {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAdminGuard(async () => {
   try {
     const db = await getDatabase();
     const teams = await db.all<{ id: number; name: string }>(
@@ -24,4 +18,4 @@ export async function GET() {
       { status: 500 },
     );
   }
-}
+});

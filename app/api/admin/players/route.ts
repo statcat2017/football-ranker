@@ -3,17 +3,11 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth/admin";
+import { withAdminGuard } from "@/lib/auth/guard";
 import { getDatabase } from "@/lib/db/client";
 import { getAdminPlayers, createAdminPlayer } from "@/lib/admin/players";
 
-export async function GET(request: Request) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const GET = withAdminGuard(async (request: Request) => {
   try {
     const url = new URL(request.url);
     const search = url.searchParams.get("search") ?? undefined;
@@ -40,7 +34,7 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
-}
+});
 
 const createPlayerSchema = z.object({
   name: z.string().min(1).max(200),
@@ -54,13 +48,7 @@ const createPlayerSchema = z.object({
   photo_url: z.string().nullable().optional(),
 });
 
-export async function POST(request: Request) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export const POST = withAdminGuard(async (request: Request) => {
   try {
     const body = await request.json();
     const parsed = createPlayerSchema.safeParse(body);
@@ -82,4 +70,4 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});

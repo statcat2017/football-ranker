@@ -2,13 +2,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { getDatabase } from "@/lib/db/client";
 import { castVote, TokenError } from "@/lib/votes/cast";
 import { getRandomMatchup } from "@/lib/players/queries";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { hashForAudit, parseFirstIp } from "@/lib/matchup-token";
+import { ensureSessionCookie, persistSessionCookie } from "@/lib/session";
 import type { CastVoteResult } from "@/lib/types";
 
 const castVoteSchema = z.object({
@@ -48,11 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const cookieStore = await cookies();
-    let sessionId = cookieStore.get("fr_session")?.value;
-    if (!sessionId) {
-      sessionId = crypto.randomUUID();
-    }
+    const { sessionId, isNew } = await ensureSessionCookie();
 
     const db = await getDatabase();
     const { vote } = await castVote(db, {
@@ -70,14 +66,7 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({ vote, nextMatchup });
 
-    if (!cookieStore.get("fr_session")) {
-      response.cookies.set("fr_session", sessionId, {
-        httpOnly: true,
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/",
-      });
-    }
+    if (isNew) persistSessionCookie(response, sessionId);
 
     return response;
   } catch (error) {
