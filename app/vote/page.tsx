@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getDatabase } from "@/lib/db/client";
 import { getRandomMatchup } from "@/lib/players/queries";
 import { VotePanel } from "@/components/VotePanel";

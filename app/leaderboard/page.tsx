@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getDatabase } from "@/lib/db/client";
 import { getLeaderboard } from "@/lib/leaderboard/queries";
 import { Leaderboard } from "@/components/Leaderboard";
