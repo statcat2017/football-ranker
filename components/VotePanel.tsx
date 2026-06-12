@@ -1,36 +1,40 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PlayerCard } from "./PlayerCard";
 import type { Matchup, CastVoteResult } from "@/lib/types";
 
-interface VotePanelProps {
-  initialMatchup: Matchup;
-}
+type VoteStatus = "idle" | "voting" | "result" | "loading";
 
-type VoteStatus = "idle" | "voting" | "result";
-
-export function VotePanel({ initialMatchup }: VotePanelProps) {
-  const [matchup, setMatchup] = useState<Matchup>(initialMatchup);
-  const [status, setStatus] = useState<VoteStatus>("idle");
+export function VotePanel() {
+  const [matchup, setMatchup] = useState<Matchup | null>(null);
+  const [status, setStatus] = useState<VoteStatus>("loading");
   const [voteCount, setVoteCount] = useState(0);
   const [lastResult, setLastResult] = useState<CastVoteResult["vote"] | null>(null);
 
   const fetchNewMatchup = useCallback(async () => {
     try {
+      setStatus("loading");
       const res = await fetch("/api/matchups/next");
       if (res.ok) {
         const newMatchup = await res.json();
         setMatchup(newMatchup);
+        setStatus("idle");
+      } else {
+        setStatus("idle");
       }
     } catch {
-      // retry silently failed
+      setStatus("idle");
     }
   }, []);
 
+  useEffect(() => {
+    fetchNewMatchup();
+  }, [fetchNewMatchup]);
+
   const handleVote = useCallback(
     async (winnerId: number) => {
-      if (status === "voting") return;
+      if (status === "voting" || !matchup) return;
       setStatus("voting");
 
       try {
@@ -71,6 +75,10 @@ export function VotePanel({ initialMatchup }: VotePanelProps) {
     },
     [matchup, status],
   );
+
+  if (status === "loading" || !matchup) {
+    return <div className="empty-state"><p>Loading matchup...</p></div>;
+  }
 
   const winnerId = lastResult?.winnerId;
   const loserId = lastResult?.loserId;
