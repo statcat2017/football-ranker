@@ -56,6 +56,8 @@ jobs:
             set -a
             . /etc/football-ranker.env
             set +a
+            echo "SQLITE_DB_PATH from env: $SQLITE_DB_PATH"
+            echo "DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}"
             sudo systemctl restart football-ranker
 
       - name: Import players
@@ -72,10 +74,20 @@ jobs:
             set -a
             . /etc/football-ranker.env
             set +a
+            echo "=== ENV DEBUG ==="
+            echo "SQLITE_DB_PATH=$SQLITE_DB_PATH"
+            echo "DEPLOY_PATH=${{ secrets.DEPLOY_PATH }}"
+            echo "CWD=$(pwd)"
+            echo "DB dirname exists: $(ls -la $(dirname "${SQLITE_DB_PATH:-./data/football-ranker.sqlite}") 2>&1)"
+            echo "=== END ENV DEBUG ==="
             export FOOTBALL_DATA_API_TOKEN=${{ secrets.FOOTBALL_DATA_API_TOKEN }}
             export SQLITE_DB_PATH=${{ secrets.DEPLOY_PATH }}/data/football-ranker.sqlite
+            mkdir -p $(dirname "$SQLITE_DB_PATH")
             npm ci --ignore-scripts 2>/dev/null
             npx tsx scripts/import-players.ts
+            echo "=== POST IMPORT ==="
+            echo "DB path: $SQLITE_DB_PATH"
+            echo "DB size: $(ls -la "$SQLITE_DB_PATH" 2>&1)"
             cd /tmp
             rm -rf football-ranker-import
 
