@@ -50,3 +50,4 @@ data/uploads/
 
 # dev vars
 .dev.vars
+.env
