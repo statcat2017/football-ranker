@@ -28,11 +28,25 @@ Required variables:
 ```
 SQLITE_DB_PATH=/srv/football-ranker/data/football-ranker.sqlite
 FOOTBALL_DATA_API_TOKEN=...
-ADMIN_SECRET=...
+ADMIN_PASSWORD=...
+ADMIN_SESSION_SECRET=...
 SESSION_SECRET=...
+UPLOAD_DIR=/srv/football-ranker/data/uploads/player-photos
 PORT=3001
 NODE_ENV=production
 ```
+
+## Uploads
+
+Player photos are stored in the directory specified by `UPLOAD_DIR` (default: `data/uploads/player-photos`).
+
+Upload directory setup:
+
+```bash
+sudo -u appuser mkdir -p /srv/football-ranker/data/uploads/player-photos
+```
+
+Uploaded files are served at `/uploads/player-photos/<filename>` and cached with immutable headers.
 
 ## Database
 

@@ -83,7 +83,16 @@ export function Leaderboard({ initialData }: LeaderboardProps) {
                   <td className="leaderboard__rank">{entry.rank}</td>
                   <td>
                     <div className="leaderboard__player">
-                      {entry.team_crest_url && (
+                      {entry.photo_url ? (
+                        <Image
+                          src={entry.photo_url}
+                          alt={entry.name}
+                          width={24}
+                          height={24}
+                          style={{ borderRadius: "50%", objectFit: "cover" }}
+                          className="leaderboard__crest"
+                        />
+                      ) : entry.team_crest_url ? (
                         <Image
                           src={entry.team_crest_url}
                           alt=""
@@ -91,7 +100,7 @@ export function Leaderboard({ initialData }: LeaderboardProps) {
                           height={20}
                           className="leaderboard__crest"
                         />
-                      )}
+                      ) : null}
                       <span>{entry.name}</span>
                     </div>
                   </td>

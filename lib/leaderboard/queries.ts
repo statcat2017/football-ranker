@@ -16,6 +16,7 @@ export async function getLeaderboard(
        ROW_NUMBER() OVER (ORDER BY p.elo_rating DESC) as rank,
        p.id, p.name, t.name as team_name, t.crest_url as team_crest_url,
        p.position_group, p.elo_rating, p.wins, p.losses, p.comparisons,
+       p.photo_url,
        CASE WHEN p.comparisons < 10 THEN 1 ELSE 0 END as is_provisional
      FROM players p
      LEFT JOIN teams t ON p.team_id = t.id

@@ -39,7 +39,17 @@ export function PlayerCard({ player, onSelect, disabled, isWinner, isLoser }: Pl
             height={28}
           />
         )}
-        <span className="player-card__initials">{initials}</span>
+        {player.photo_url ? (
+          <Image
+            src={player.photo_url}
+            alt={player.name}
+            width={96}
+            height={96}
+            style={{ borderRadius: "50%", objectFit: "cover" }}
+          />
+        ) : (
+          <span className="player-card__initials">{initials}</span>
+        )}
         {player.shirt_number && (
           <span className="player-card__number">{player.shirt_number}</span>
         )}

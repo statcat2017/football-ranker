@@ -46,5 +46,6 @@ function toPlayerSummary(row: Record<string, unknown>): PlayerSummary {
     team_crest_url: (row.team_crest_url as string) ?? null,
     elo_rating: row.elo_rating as number,
     comparisons: row.comparisons as number,
+    photo_url: (row.photo_url as string) ?? null,
   };
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { signMatchup, verifyMatchup, TokenError } from "./matchup-token";
 
 describe("matchup-token", () => {
@@ -12,6 +12,19 @@ describe("matchup-token", () => {
     const token = signMatchup(1, 2);
     const result = verifyMatchup(token, 1, 2);
     expect(result.valid).toBe(true);
+  });
+
+  it("rejects expired token", () => {
+    vi.useFakeTimers();
+    const token = signMatchup(1, 2);
+    // Advance past the 5-minute window
+    vi.advanceTimersByTime(5 * 60 * 1000 + 1);
+    const result = verifyMatchup(token, 1, 2);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.reason).toBe("Token expired");
+    }
+    vi.useRealTimers();
   });
 
   it("rejects wrong player IDs", () => {

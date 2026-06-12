@@ -45,5 +45,8 @@ data/*.sqlite
 data/*.sqlite-wal
 data/*.sqlite-shm
 
+# uploads
+data/uploads/
+
 # dev vars
 .dev.vars

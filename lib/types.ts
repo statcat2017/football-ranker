@@ -35,6 +35,7 @@ export interface PlayerSummary {
   team_crest_url: string | null;
   elo_rating: number;
   comparisons: number;
+  photo_url: string | null;
 }
 
 export interface Vote {
@@ -64,6 +65,7 @@ export interface LeaderboardEntry {
   wins: number;
   losses: number;
   comparisons: number;
+  photo_url: string | null;
   is_provisional: boolean;
 }
 
