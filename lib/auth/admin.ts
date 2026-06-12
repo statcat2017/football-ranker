@@ -85,6 +85,7 @@ export function setAdminSessionCookie(token: string): {
     options: {
       httpOnly: true,
       sameSite: "lax" as const,
+      secure: process.env.NODE_ENV === "production",
       maxAge: MAX_AGE,
       path: "/",
     },
@@ -102,6 +103,7 @@ export function clearAdminSessionCookie(): {
     options: {
       httpOnly: true,
       sameSite: "lax" as const,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 0,
       path: "/",
     },
