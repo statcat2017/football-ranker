@@ -17,16 +17,19 @@ export async function runMigrations(db: AppDatabase): Promise<void> {
   for (const [name, def] of additions) {
     if (!columns.has(name)) {
       await db.exec(`ALTER TABLE players ADD COLUMN ${name} ${def}`);
+      columns.add(name);
     }
   }
 
-  const newIndexes = [
-    "CREATE INDEX IF NOT EXISTS idx_players_pl_api_id ON players(pl_api_id)",
-    "CREATE INDEX IF NOT EXISTS idx_players_eligibility_category ON players(eligibility_category)",
-    "CREATE INDEX IF NOT EXISTS idx_players_current_pl ON players(is_current_pl_player)",
+  const indexCols: [string, string][] = [
+    ["idx_players_pl_api_id", "pl_api_id"],
+    ["idx_players_eligibility_category", "eligibility_category"],
+    ["idx_players_current_pl", "is_current_pl_player"],
   ];
-  for (const idx of newIndexes) {
-    try { await db.exec(idx); } catch { /* index may fail if column missing */ }
+  for (const [idxName, colName] of indexCols) {
+    if (columns.has(colName)) {
+      await db.exec(`CREATE INDEX IF NOT EXISTS ${idxName} ON players(${colName})`);
+    }
   }
 }
 

@@ -8,7 +8,7 @@ import { castVote, TokenError } from "@/lib/votes/cast";
 import { getRandomMatchup } from "@/lib/players/queries";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { hashForAudit, parseFirstIp } from "@/lib/matchup-token";
-import { ensureSessionCookie, persistSessionCookie } from "@/lib/session";
+import { getOrCreateSessionId, attachSessionCookie } from "@/lib/session";
 import type { CastVoteResult } from "@/lib/types";
 
 const castVoteSchema = z.object({
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { sessionId, isNew } = await ensureSessionCookie();
+    const { sessionId, isNew } = await getOrCreateSessionId();
 
     const db = await getDatabase();
     const { vote } = await castVote(db, {
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({ vote, nextMatchup });
 
-    if (isNew) persistSessionCookie(response, sessionId);
+    if (isNew) attachSessionCookie(response, sessionId);
 
     return response;
   } catch (error) {

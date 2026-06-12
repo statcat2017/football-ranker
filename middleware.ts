@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { decodeToken, parseSessionPayload } from "@/lib/auth/token";
 
 const COOKIE_NAME = "fr_admin_session";
 
 function isTokenValid(token: string): boolean {
-  try {
-    const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
-    const decoded = atob(base64);
-    const lastColon = decoded.lastIndexOf(":");
-    if (lastColon === -1) return false;
-    const payload = decoded.slice(0, lastColon);
-    const parts = payload.split(":");
-    if (parts.length !== 3 || parts[0] !== "admin") return false;
-    const expiry = parseInt(parts[1], 10);
-    if (!Number.isFinite(expiry) || Date.now() > expiry) return false;
-    return true;
-  } catch {
-    return false;
-  }
+  const decoded = decodeToken(token);
+  if (!decoded) return false;
+  const parsed = parseSessionPayload(decoded.payload);
+  if (!parsed) return false;
+  return Date.now() <= parsed.expiry;
 }
 
 export function middleware(request: NextRequest) {

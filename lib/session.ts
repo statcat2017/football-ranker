@@ -10,7 +10,7 @@ const COOKIE_OPTIONS = {
   path: "/",
 };
 
-export async function ensureSessionCookie(): Promise<{
+export async function getOrCreateSessionId(): Promise<{
   sessionId: string;
   isNew: boolean;
 }> {
@@ -20,7 +20,7 @@ export async function ensureSessionCookie(): Promise<{
   return { sessionId, isNew: !existing };
 }
 
-export function persistSessionCookie(
+export function attachSessionCookie(
   response: NextResponse,
   sessionId: string,
 ): void {

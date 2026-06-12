@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { decodeToken, parseSessionPayload } from "./token";
 
 const COOKIE_NAME = "fr_admin_session";
 const MAX_AGE = 60 * 60 * 24; // 24 hours
@@ -27,28 +28,21 @@ export function signAdminSession(): string {
 
 export function verifyAdminSession(token: string): { valid: boolean; reason?: string } {
   try {
-    const decoded = Buffer.from(token, "base64url").toString("utf8");
-    const lastColon = decoded.lastIndexOf(":");
-    if (lastColon === -1) return { valid: false, reason: "Malformed token" };
+    const decoded = decodeToken(token);
+    if (!decoded) return { valid: false, reason: "Malformed token" };
 
-    const payload = decoded.slice(0, lastColon);
-    const sig = decoded.slice(lastColon + 1);
+    const parsed = parseSessionPayload(decoded.payload);
+    if (!parsed) return { valid: false, reason: "Malformed token" };
 
-    const parts = payload.split(":");
-    if (parts.length !== 3 || parts[0] !== "admin") {
-      return { valid: false, reason: "Malformed token" };
-    }
-
-    const expiry = parseInt(parts[1], 10);
-    if (!Number.isFinite(expiry) || Date.now() > expiry) {
+    if (Date.now() > parsed.expiry) {
       return { valid: false, reason: "Token expired" };
     }
 
     const recomputed = crypto.createHmac("sha256", getSecret());
-    recomputed.update(payload);
+    recomputed.update(decoded.payload);
     const expectedSig = recomputed.digest("hex").slice(0, 16);
 
-    const sigBuf = Buffer.from(sig, "hex");
+    const sigBuf = Buffer.from(decoded.sig, "hex");
     const expectedBuf = Buffer.from(expectedSig, "hex");
     if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
       return { valid: false, reason: "Invalid signature" };

@@ -351,7 +351,6 @@ async function main() {
       const extId = plApiId !== undefined ? `plapi:${plApiId}` : `plapi:noid:${norm.slice(0, 30)}`;
 
       // Determine initial team
-      const isCurrent = currentPlayerIds.size > 0 && false; // Will be overridden below
       const teamId = allTimeApps >= 100 ? legendsTeam!.id : fodderTeam!.id;
 
       try {
@@ -375,9 +374,11 @@ async function main() {
   // ── 6. Ensure current squad players keep current_pl status ───────────
 
   if (currentPlayerIds.size > 0) {
-    const idList = [...currentPlayerIds].join(",");
-    await db.exec(
-      `UPDATE players SET is_current_pl_player = 1, updated_at = CURRENT_TIMESTAMP WHERE id IN (${idList})`,
+    const ids = [...currentPlayerIds];
+    const placeholders = ids.map(() => "?").join(",");
+    await db.run(
+      `UPDATE players SET is_current_pl_player = 1, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
+      ids,
     );
   }
 

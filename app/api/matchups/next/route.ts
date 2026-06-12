@@ -4,18 +4,18 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/db/client";
 import { getRandomMatchup } from "@/lib/players/queries";
-import { ensureSessionCookie, persistSessionCookie } from "@/lib/session";
+import { getOrCreateSessionId, attachSessionCookie } from "@/lib/session";
 
 export async function GET() {
   try {
-    const { sessionId, isNew } = await ensureSessionCookie();
+    const { sessionId, isNew } = await getOrCreateSessionId();
 
     const db = await getDatabase();
     const matchup = await getRandomMatchup(db, sessionId);
 
     const response = NextResponse.json(matchup);
 
-    if (isNew) persistSessionCookie(response, sessionId);
+    if (isNew) attachSessionCookie(response, sessionId);
 
     return response;
   } catch (error) {
