@@ -56,7 +56,7 @@ describe("GET /api/leaderboard", () => {
   it("hides provisional players by default", async () => {
     await db.run(
       "INSERT INTO players (id, external_id, name, is_active, elo_rating, comparisons) VALUES (?, ?, ?, 1, ?, ?)",
-      [3, "ext-3", "New Kid", 2000, 3],
+      [3, "ext-3", "New Kid", 2000, 0],
     );
 
     const { GET } = await import("@/app/api/leaderboard/route");

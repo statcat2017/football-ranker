@@ -9,7 +9,7 @@ export async function getLeaderboard(
 
   const whereClause = includeProvisional
     ? ""
-    : "WHERE p.comparisons >= 10";
+    : "WHERE p.comparisons >= 1";
 
   const rows = await db.all<LeaderboardEntry>(
     `SELECT
@@ -17,11 +17,11 @@ export async function getLeaderboard(
        p.id, p.name, t.name as team_name, t.crest_url as team_crest_url,
        p.position_group, p.elo_rating, p.wins, p.losses, p.comparisons,
        p.photo_url,
-       CASE WHEN p.comparisons < 10 THEN 1 ELSE 0 END as is_provisional
+       CASE WHEN p.comparisons < 1 THEN 1 ELSE 0 END as is_provisional
      FROM players p
      LEFT JOIN teams t ON p.team_id = t.id
      WHERE p.is_active = 1
-     ${whereClause ? `AND p.comparisons >= 10` : ""}
+     ${whereClause ? `AND p.comparisons >= 1` : ""}
      ORDER BY p.elo_rating DESC
      LIMIT ?`,
     [limit],
