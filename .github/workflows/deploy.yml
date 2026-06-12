@@ -83,7 +83,7 @@ jobs:
             export FOOTBALL_DATA_API_TOKEN=${{ secrets.FOOTBALL_DATA_API_TOKEN }}
             export SQLITE_DB_PATH=${{ secrets.DEPLOY_PATH }}/data/football-ranker.sqlite
             mkdir -p $(dirname "$SQLITE_DB_PATH")
-            npm ci --ignore-scripts 2>/dev/null
+            npm ci
             npx tsx scripts/import-players.ts
             echo "=== POST IMPORT ==="
             echo "DB path: $SQLITE_DB_PATH"
