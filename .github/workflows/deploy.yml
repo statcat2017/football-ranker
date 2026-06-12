@@ -65,12 +65,18 @@ jobs:
           username: appuser
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            cd ${{ secrets.DEPLOY_PATH }}
+            cd /tmp
+            rm -rf football-ranker-import
+            git clone --depth 1 https://github.com/${{ github.repository }}.git football-ranker-import
+            cd football-ranker-import
             set -a
             . /etc/football-ranker.env
             set +a
             export FOOTBALL_DATA_API_TOKEN=${{ secrets.FOOTBALL_DATA_API_TOKEN }}
+            npm ci --ignore-scripts 2>/dev/null
             npx tsx scripts/import-players.ts
+            cd /tmp
+            rm -rf football-ranker-import
 
       - name: Health check
         uses: appleboy/ssh-action@v1
