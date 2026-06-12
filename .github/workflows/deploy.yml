@@ -58,6 +58,20 @@ jobs:
             set +a
             sudo systemctl restart football-ranker
 
+      - name: Import players
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: appuser
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            set -a
+            . /etc/football-ranker.env
+            set +a
+            export FOOTBALL_DATA_API_TOKEN=${{ secrets.FOOTBALL_DATA_API_TOKEN }}
+            npx tsx scripts/import-players.ts
+
       - name: Health check
         uses: appleboy/ssh-action@v1
         with:
