@@ -31,6 +31,7 @@ export function AdminPlayerList() {
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -85,6 +86,21 @@ export function AdminPlayerList() {
       body: JSON.stringify({ active: activate }),
     });
     if (res.ok) setRefreshKey((k) => k + 1);
+  }
+
+  async function handlePhotoUpload(id: number, file: File) {
+    setUploadingId(id);
+    const formData = new FormData();
+    formData.append("photo", file);
+    await fetch(`/api/admin/players/${id}/photo`, { method: "POST", body: formData });
+    setUploadingId(null);
+    setRefreshKey((k) => k + 1);
+  }
+
+  function setMissingPhotosFilter() {
+    setActiveFilter("true");
+    setPhotoFilter("false");
+    setOffset(0);
   }
 
   async function handleLogout() {
@@ -181,6 +197,20 @@ export function AdminPlayerList() {
           <option value="true">Has Photo</option>
           <option value="false">No Photo</option>
         </select>
+        <button
+          onClick={setMissingPhotosFilter}
+          style={{
+            padding: "0.5rem 1rem",
+            background: photoFilter === "false" && activeFilter === "true" ? "var(--accent)" : "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "8px",
+            color: photoFilter === "false" && activeFilter === "true" ? "#fff" : "var(--text)",
+            fontSize: "0.875rem",
+            cursor: "pointer",
+          }}
+        >
+          Missing Photos
+        </button>
       </div>
 
       <div style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: "1rem" }}>
@@ -216,9 +246,35 @@ export function AdminPlayerList() {
                     {p.photo_url ? (
                       <Image src={p.photo_url} alt="" width={36} height={36} style={{ borderRadius: "50%", objectFit: "cover" }} />
                     ) : (
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--surface-hover)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                        No
-                      </div>
+                      <label
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          background: "var(--surface-hover)",
+                          cursor: "pointer",
+                          fontSize: "0.7rem",
+                          color: uploadingId === p.id ? "var(--text-muted)" : "var(--accent)",
+                          fontWeight: 600,
+                        }}
+                        title="Upload photo"
+                      >
+                        {uploadingId === p.id ? "\u2026" : "+"}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          style={{ display: "none" }}
+                          disabled={uploadingId !== null}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handlePhotoUpload(p.id, file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
                     )}
                   </td>
                   <td style={{ ...tdStyle, fontWeight: 600 }}>{p.name}</td>
