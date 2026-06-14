@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "crests.football-data.org",
       },
+      {
+        protocol: "https",
+        hostname: "resources.premierleague.com",
+      },
     ],
   },
   async headers() {
