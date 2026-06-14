@@ -12,6 +12,8 @@ export async function runMigrations(db: AppDatabase): Promise<void> {
     ["eligibility_category", "TEXT"],
     ["fodder_tier", "TEXT"],
     ["stats_updated_at", "TEXT"],
+    ["opta_id", "TEXT"],
+    ["photo_updated_at", "TEXT"],
   ];
 
   for (const [name, def] of additions) {
