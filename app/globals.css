@@ -207,6 +207,29 @@ h1, h2, h3 {
   padding: 2px;
 }
 
+.player-card__remove-photo {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+  border: 2px solid var(--surface);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.player-card__remove-photo:hover {
+  background: rgb(239, 68, 68);
+}
+
 .player-card__number {
   position: absolute;
   bottom: -4px;

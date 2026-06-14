@@ -9,9 +9,10 @@ interface PlayerCardProps {
   disabled: boolean;
   isWinner?: boolean;
   isLoser?: boolean;
+  onRemovePhoto?: (id: number) => void;
 }
 
-export function PlayerCard({ player, onSelect, disabled, isWinner, isLoser }: PlayerCardProps) {
+export function PlayerCard({ player, onSelect, disabled, isWinner, isLoser, onRemovePhoto }: PlayerCardProps) {
   let cardClass = "player-card";
   if (isWinner) cardClass += " player-card--winner";
   if (isLoser) cardClass += " player-card--loser";
@@ -55,6 +56,19 @@ export function PlayerCard({ player, onSelect, disabled, isWinner, isLoser }: Pl
         )}
         {player.shirt_number && (
           <span className="player-card__number">{player.shirt_number}</span>
+        )}
+        {onRemovePhoto && player.photo_url && (
+          <button
+            className="player-card__remove-photo"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemovePhoto(player.id);
+            }}
+            title="Remove photo"
+            aria-label="Remove photo"
+          >
+            ×
+          </button>
         )}
       </div>
       <div className="player-card__info">

@@ -11,6 +11,14 @@ export function VotePanel() {
   const [status, setStatus] = useState<VoteStatus>("loading");
   const [voteCount, setVoteCount] = useState(0);
   const [lastResult, setLastResult] = useState<CastVoteResult["vote"] | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/session")
+      .then((r) => r.json())
+      .then((d) => setIsAdmin(d.authenticated))
+      .catch(() => {});
+  }, []);
 
   const fetchNewMatchup = useCallback(async () => {
     try {
@@ -76,6 +84,21 @@ export function VotePanel() {
     [matchup, status],
   );
 
+  const handleRemovePhoto = useCallback(async (playerId: number) => {
+    if (!window.confirm("Remove this player's photo?")) return;
+    await fetch(`/api/admin/players/${playerId}/photo`, { method: "DELETE" });
+    setMatchup((prev) => {
+      if (!prev) return null;
+      if (prev.playerA.id === playerId) {
+        return { ...prev, playerA: { ...prev.playerA, photo_url: null } };
+      }
+      if (prev.playerB.id === playerId) {
+        return { ...prev, playerB: { ...prev.playerB, photo_url: null } };
+      }
+      return prev;
+    });
+  }, []);
+
   if (status === "loading" || !matchup) {
     return <div className="empty-state"><p>Loading matchup...</p></div>;
   }
@@ -92,6 +115,7 @@ export function VotePanel() {
           disabled={status !== "idle"}
           isWinner={status === "result" && matchup.playerA.id === winnerId}
           isLoser={status === "result" && matchup.playerA.id === loserId}
+          onRemovePhoto={isAdmin ? handleRemovePhoto : undefined}
         />
         <div className="matchup__vs" aria-hidden="true">
           <span>VS</span>
@@ -102,6 +126,7 @@ export function VotePanel() {
           disabled={status !== "idle"}
           isWinner={status === "result" && matchup.playerB.id === winnerId}
           isLoser={status === "result" && matchup.playerB.id === loserId}
+          onRemovePhoto={isAdmin ? handleRemovePhoto : undefined}
         />
       </div>
       {voteCount > 0 && (
