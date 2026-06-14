@@ -1,6 +1,8 @@
 import type { PlayerSummary } from "@/lib/types";
 import Image from "next/image";
 
+const SILHOUETTE = "/player-silhouette.svg";
+
 interface PlayerCardProps {
   player: PlayerSummary;
   onSelect: () => void;
@@ -10,13 +12,6 @@ interface PlayerCardProps {
 }
 
 export function PlayerCard({ player, onSelect, disabled, isWinner, isLoser }: PlayerCardProps) {
-  const initials = player.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   let cardClass = "player-card";
   if (isWinner) cardClass += " player-card--winner";
   if (isLoser) cardClass += " player-card--loser";
@@ -49,7 +44,14 @@ export function PlayerCard({ player, onSelect, disabled, isWinner, isLoser }: Pl
             style={{ borderRadius: "50%", objectFit: "cover" }}
           />
         ) : (
-          <span className="player-card__initials">{initials}</span>
+          <Image
+            key={player.id}
+            src={SILHOUETTE}
+            alt={player.name}
+            width={96}
+            height={96}
+            style={{ borderRadius: "50%", objectFit: "cover" }}
+          />
         )}
         {player.shirt_number && (
           <span className="player-card__number">{player.shirt_number}</span>
