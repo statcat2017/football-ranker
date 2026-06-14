@@ -41,6 +41,7 @@ export function PlayerCard({ player, onSelect, disabled, isWinner, isLoser }: Pl
         )}
         {player.photo_url ? (
           <Image
+            key={player.id}
             src={player.photo_url}
             alt={player.name}
             width={96}
